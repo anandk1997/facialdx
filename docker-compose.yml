@@ -1,0 +1,14 @@
+services:
+  app:
+    container_name: facialdx
+    build: .
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          ignore:
+            - node_modules/
+    ports:
+      - "5001:5001"
+    command: ["npm", "run", "start"]
+    restart: always

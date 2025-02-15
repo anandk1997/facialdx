@@ -2,10 +2,13 @@ import validator from "validator";
 import bcrypt from "bcrypt";
 import { User } from "../../models/user";
 import { prisma } from "../../utils/prisma";
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import { customErrorRes, customResponse } from "../../utils";
 
-export const login = async (req: Request, res: Response) => {
+export const login: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const {
       email,
@@ -27,11 +30,12 @@ export const login = async (req: Request, res: Response) => {
 
     for (const [field, value] of Object.entries(requiredFields)) {
       if (!value) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required`,
         });
+        return;
       }
     }
 
@@ -40,11 +44,12 @@ export const login = async (req: Request, res: Response) => {
 
     // Validate email format
     if (!validator.isEmail(normalizedEmail)) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid email format",
       });
+      return;
     }
 
     const user = await prisma.user.findUnique({
@@ -52,27 +57,30 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "User not found",
       });
+      return;
     }
 
     if (!user?.isActive) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 401,
         message: "Account is deactivated. Please contact support",
       });
+      return;
     }
 
     if (!(await bcrypt.compare(password, user.password))) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid password",
       });
+      return;
     }
 
     let updatedUser;
@@ -88,11 +96,12 @@ export const login = async (req: Request, res: Response) => {
         },
       });
     } catch (updateError) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 500,
         message: "Failed to update user details",
       });
+      return;
     }
 
     const sanitizedUser = User.sanitizeUser(updatedUser);
@@ -122,10 +131,11 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",
     });
+    return;
   }
 };

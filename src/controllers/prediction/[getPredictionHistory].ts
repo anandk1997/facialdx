@@ -1,17 +1,21 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { prisma } from "../../utils/prisma";
 import { customErrorRes, customResponse } from "../../utils";
 
-export const getPredictionHistory = async (req: Request, res: Response) => {
+export const getPredictionHistory: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!id) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "User ID is required",
       });
+      return;
     }
 
     const getPredictionById = async () =>
@@ -22,22 +26,21 @@ export const getPredictionHistory = async (req: Request, res: Response) => {
     const data = await getPredictionById();
 
     if (!data || data.length === 0) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "Data not found",
       });
+      return;
     }
 
     const structuredData = data?.map((item) => {
-      const darkCircleOutput = item?.dark_circle_output?.toString("base64");
-      const inputImage = item?.input_image?.toString("base64");
-      const pupilComparisonOutput =
-        item?.pupil_comparison_output?.toString("base64");
-      const noseShapeOutput = item?.nose_shape_output?.toString("base64");
-      const nostrilOutput = item?.nostril_output?.toString("base64");
-      const mouthAlignmentOutput =
-        item?.mouth_alignment_output?.toString("base64");
+      const darkCircleOutput = item?.dark_circle_output?.toString();
+      const inputImage = item?.input_image?.toString();
+      const pupilComparisonOutput = item?.pupil_comparison_output?.toString();
+      const noseShapeOutput = item?.nose_shape_output?.toString();
+      const nostrilOutput = item?.nostril_output?.toString();
+      const mouthAlignmentOutput = item?.mouth_alignment_output?.toString();
 
       return {
         ...item,
@@ -66,7 +69,7 @@ export const getPredictionHistory = async (req: Request, res: Response) => {
       };
     });
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Data found successfully",
@@ -74,7 +77,7 @@ export const getPredictionHistory = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching user by ID:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

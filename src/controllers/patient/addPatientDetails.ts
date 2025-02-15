@@ -1,9 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 
 import { prisma } from "../../utils/prisma";
 import { customErrorRes, customResponse } from "../../utils";
 
-export const addPatientDetails = async (req: Request, res: Response) => {
+export const addPatientDetails: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id, image_id, name } = req.body;
 
@@ -16,11 +19,12 @@ export const addPatientDetails = async (req: Request, res: Response) => {
 
     for (const [field, value] of Object.entries(requiredFields)) {
       if (!value) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required`,
         });
+        return;
       }
     }
 
@@ -34,11 +38,12 @@ export const addPatientDetails = async (req: Request, res: Response) => {
     });
 
     if (!prediction) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "Prediction details not found",
       });
+      return;
     }
 
     const [existingPatient, existingImageID] = await Promise.all([
@@ -55,19 +60,21 @@ export const addPatientDetails = async (req: Request, res: Response) => {
     ]);
 
     if (existingPatient) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Patient details already exists",
       });
+      return;
     }
 
     if (existingImageID) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Patient ID already exists",
       });
+      return;
     }
 
     const patient = await prisma.patient.create({
@@ -78,7 +85,7 @@ export const addPatientDetails = async (req: Request, res: Response) => {
       },
     });
 
-    return customResponse({
+    customResponse({
       res,
       status: 201,
       message: "Patient details added successfully",
@@ -91,7 +98,7 @@ export const addPatientDetails = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error creating user: " + error);
 
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

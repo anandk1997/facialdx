@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import bcrypt from "bcrypt";
 
 import { prisma } from "../../../utils/prisma";
@@ -7,19 +7,20 @@ import { OTP_EXPIRATION_TIME_MS, otpCache } from "./utils";
 import { User } from "../../../models/user";
 import validator from "validator";
 
-export const validateOtpAndResetPassword = async (
+export const validateOtpAndResetPassword: RequestHandler = async (
   req: Request,
   res: Response,
-) => {
+): Promise<void> => {
   try {
     const { email, otp, newPassword, confirmNewPassword } = req.body;
 
     if (!email || !otp || !newPassword || !confirmNewPassword) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Email, OTP, and new passwords are required",
       });
+      return;
     }
 
     // Convert email to lowercase
@@ -27,29 +28,32 @@ export const validateOtpAndResetPassword = async (
 
     // Validate email format
     if (!validator.isEmail(normalizedEmail)) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid email format",
       });
+      return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "New and confirm password do not match",
       });
+      return;
     }
 
     const storedOtpData = otpCache.get(normalizedEmail);
 
     if (!storedOtpData || storedOtpData.otp !== otp) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid OTP",
       });
+      return;
     }
 
     const otpTimestamp = storedOtpData.timestamp;
@@ -59,11 +63,12 @@ export const validateOtpAndResetPassword = async (
       // OTP expired
       otpCache.delete(normalizedEmail); // Remove expired OTP from cache
 
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "OTP has expired",
       });
+      return;
     }
 
     const user = await prisma.user.findUnique({
@@ -71,11 +76,12 @@ export const validateOtpAndResetPassword = async (
     });
 
     if (!user) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "User not found",
       });
+      return;
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -89,18 +95,20 @@ export const validateOtpAndResetPassword = async (
 
     otpCache.delete(normalizedEmail); // Remove expired OTP from cache
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Password reset successful",
       data: User.sanitizeUser(user),
     });
+    return;
   } catch (error) {
     console.error("Error in validateOtpAndResetPassword:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",
     });
+    return;
   }
 };

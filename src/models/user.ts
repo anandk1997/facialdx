@@ -4,9 +4,9 @@ import { User as UserModel } from "@prisma/client";
 import { prisma } from "../utils/prisma";
 import { NextFunction, Request, Response } from "express";
 
-const generateToken = (user: UserModel, expiresIn?: string) => {
+const generateToken = (user: UserModel): string => {
   return jwt.sign({ userId: user.id }, env.JWT_SECRET!, {
-    expiresIn: expiresIn ?? "24h",
+    expiresIn: "24h",
   });
 };
 

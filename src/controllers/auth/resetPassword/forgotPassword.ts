@@ -1,20 +1,24 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 
 import { prisma } from "../../../utils/prisma";
 import { customErrorRes, customResponse, sendEmail } from "../../../utils";
 import { cleanExpiredOTPs, generateOTP, otpCache, otpEmail } from "./utils";
 import validator from "validator";
 
-export const forgotPassword = async (req: Request, res: Response) => {
+export const forgotPassword: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { email } = req.body;
 
     if (!email) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Email is required",
       });
+      return;
     }
 
     // Convert email to lowercase
@@ -22,11 +26,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     // Validate email format
     if (!validator.isEmail(normalizedEmail)) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid email format",
       });
+      return;
     }
 
     const user = await prisma.user.findUnique({
@@ -34,19 +39,21 @@ export const forgotPassword = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "User not found",
       });
+      return;
     }
 
     if (!user?.isActive) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 401,
         message: "Account is deactivated. Please contact support",
       });
+      return;
     }
 
     // Store OTP in cache with email as key
@@ -58,7 +65,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     // Send OTP via email
     sendEmail(normalizedEmail, otpEmail.subject, otpEmail.html(otp));
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "OTP sent on Email",
@@ -66,13 +73,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
         email: user?.email,
       },
     });
+    return;
   } catch (error) {
     console.error("Error in forgotPassword:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",
     });
+    return;
   }
 };
 

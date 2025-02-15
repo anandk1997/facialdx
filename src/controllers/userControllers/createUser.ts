@@ -3,10 +3,13 @@ import bcrypt from "bcrypt";
 
 import { User } from "../../models/user";
 import { prisma } from "../../utils/prisma";
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { customErrorRes, customResponse, sendEmail } from "../../utils";
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id, name, email, phone, password, confirmPassword, organization } =
       req.body;
@@ -24,20 +27,22 @@ export const createUser = async (req: Request, res: Response) => {
 
     for (const [field, value] of Object.entries(requiredFields)) {
       if (!value) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required`,
         });
+        return;
       }
     }
 
     if (password !== confirmPassword) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Passwords do not match",
       });
+      return;
     }
 
     // Convert email to lowercase
@@ -45,11 +50,12 @@ export const createUser = async (req: Request, res: Response) => {
 
     // Validate email format
     if (!validator.isEmail(normalizedEmail)) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid email format",
       });
+      return;
     }
 
     // Validate phone number length and format
@@ -57,19 +63,21 @@ export const createUser = async (req: Request, res: Response) => {
     const maxPhoneLength = 15;
 
     if (phone.length < minPhoneLength || phone.length > maxPhoneLength) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: `Phone number must be between ${minPhoneLength} and ${maxPhoneLength} digits`,
       });
+      return;
     }
 
     if (!validator.isNumeric(phone)) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Phone number must contain only digits",
       });
+      return;
     }
 
     const [existingEmail, existingPhone] = await Promise.all([
@@ -78,19 +86,21 @@ export const createUser = async (req: Request, res: Response) => {
     ]);
 
     if (existingEmail) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Email already exists",
       });
+      return;
     }
 
     if (existingPhone) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Phone number already exists",
       });
+      return;
     }
 
     // Hash password
@@ -113,7 +123,7 @@ export const createUser = async (req: Request, res: Response) => {
       userEmail.html(normalizedEmail, password),
     );
 
-    return customResponse({
+    customResponse({
       res,
       status: 201,
       message: "User created successfully",
@@ -121,7 +131,7 @@ export const createUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.log("Error creating user: " + error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

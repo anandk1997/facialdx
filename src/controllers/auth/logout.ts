@@ -1,9 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { customErrorRes, customResponse } from "../../utils";
 import { prisma } from "../../utils/prisma";
 import { User } from "../../models/user";
 
-export const logout = async (req: Request, res: Response) => {
+export const logout: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     // res.clearCookie(env.SESSION_COOKIE!);
 
@@ -13,30 +16,35 @@ export const logout = async (req: Request, res: Response) => {
     const authenticatedUserId = req?.user?.userId;
 
     if (id !== authenticatedUserId) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 403,
         message: "You are not authorized ",
       });
+      return;
     }
 
-    if (!id)
-      return customErrorRes({
+    if (!id) {
+      customErrorRes({
         res,
         status: 400,
         message: "User ID is required",
       });
+      return;
+    }
 
     const user = await prisma.user.findUnique({
       where: { id },
     });
 
-    if (!user)
-      return customErrorRes({
+    if (!user) {
+      customErrorRes({
         res,
         status: 404,
         message: "User not found",
       });
+      return;
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -47,14 +55,14 @@ export const logout = async (req: Request, res: Response) => {
 
     const sanitizedUser = User.sanitizeUser(updatedUser);
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Logout successfully",
       data: sanitizedUser,
     });
   } catch (error) {
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

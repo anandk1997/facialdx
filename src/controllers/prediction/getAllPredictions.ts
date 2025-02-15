@@ -1,8 +1,11 @@
 import { customErrorRes, customResponse } from "../../utils";
 import { prisma } from "../../utils/prisma";
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 
-export const getPredictions = async (req: Request, res: Response) => {
+export const getPredictions: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -48,7 +51,7 @@ export const getPredictions = async (req: Request, res: Response) => {
     const predictions = await getAllPredictionsPaginated();
 
     if (predictions?.length === 0) {
-      return customResponse({
+      customResponse({
         res,
         status: 404,
         message: "No data found",
@@ -58,9 +61,10 @@ export const getPredictions = async (req: Request, res: Response) => {
         totalPages,
         currentPage: page,
       });
+      return;
     }
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Data found successfully",
@@ -72,7 +76,7 @@ export const getPredictions = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching predictions:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

@@ -1,18 +1,23 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { prisma } from "../../../utils/prisma";
 import { customErrorRes, customResponse } from "../../../utils";
 import { predictionResponse } from "./utils";
 
-export const getPatientDetailsAdmin = async (req: Request, res: Response) => {
+export const getPatientDetailsAdmin: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { image_id } = req.params;
 
-    if (!image_id)
-      return customErrorRes({
+    if (!image_id) {
+      customErrorRes({
         res,
         status: 400,
         message: "Image ID is required",
       });
+      return;
+    }
 
     const getPatientById = async () =>
       await prisma.patient.findUnique({
@@ -33,16 +38,17 @@ export const getPatientDetailsAdmin = async (req: Request, res: Response) => {
     const prediction: any = await getPredictionById();
 
     if (!patient && !prediction) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "Data not found",
       });
+      return;
     }
 
     const analysis = predictionResponse(prediction, patient);
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Data found successfully",
@@ -51,7 +57,7 @@ export const getPatientDetailsAdmin = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching user by ID:", error);
 
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

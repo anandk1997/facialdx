@@ -1,33 +1,36 @@
 import axios from "axios";
 import { customErrorRes, customResponse } from "../../utils";
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { env } from "../../config/env";
 
-import multer from "multer";
 import FormData from "form-data";
 import fs from "fs";
-import path from "path";
 
-export const uploadImages = async (req: Request, res: Response) => {
+export const uploadImages: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id, images } = req.body;
 
     if (!id) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "User ID is required",
       });
+      return;
     }
 
     const files: Express.Multer.File[] = req.files as Express.Multer.File[];
 
     if (!files || files.length === 0) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "No files uploaded",
       });
+      return;
     }
 
     // Prepare the files to be sent to the other API
@@ -52,11 +55,12 @@ export const uploadImages = async (req: Request, res: Response) => {
     });
 
     // if (!images || !Array?.isArray(images) || images?.length === 0) {
-    //   return customErrorRes({
+    //    customErrorRes({
     //     res,
     //     status: 400,
     //     message: "Images are required",
     //   });
+    //   return
     // }
 
     // const formData = new FormData();
@@ -69,14 +73,14 @@ export const uploadImages = async (req: Request, res: Response) => {
 
     // const apiResponse = await axios.post(apiUrl, formData);
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Images uploaded successfully",
       data: apiResponse?.data,
     });
   } catch (error) {
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

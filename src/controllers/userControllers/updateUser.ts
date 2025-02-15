@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import bcrypt from "bcrypt";
 
 import { User } from "../../models/user";
@@ -6,17 +6,22 @@ import { prisma } from "../../utils/prisma";
 import validator from "validator";
 import { customErrorRes, customResponse } from "../../utils";
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { name, email, phone, password, isActive, organization } = req.body;
 
-    if (!id)
-      return customErrorRes({
+    if (!id) {
+      customErrorRes({
         res,
         status: 400,
         message: "User ID is required",
       });
+      return;
+    }
 
     // Validate fields if they are provided
     const minPhoneLength = 4;
@@ -24,57 +29,64 @@ export const updateUser = async (req: Request, res: Response) => {
 
     if (phone) {
       if (phone.length < minPhoneLength || phone.length > maxPhoneLength) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: `Phone number must be between ${minPhoneLength} and ${maxPhoneLength} digits`,
         });
+        return;
       }
 
       if (!validator.isNumeric(phone)) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: "Phone number must contain only digits",
         });
+        return;
       }
     }
 
     if (email && !validator.isEmail(email)) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Invalid email format",
       });
+      return;
     }
 
     // Check for empty email or phone number
     if (email === "") {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Email cannot be empty",
       });
+      return;
     }
 
     if (phone === "") {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Phone number cannot be empty",
       });
+      return;
     }
 
     const user = await prisma.user.findUnique({
       where: { id },
     });
 
-    if (!user)
-      return customErrorRes({
+    if (!user) {
+      customErrorRes({
         res,
         status: 404,
         message: "User not found",
       });
+      return;
+    }
 
     const updateData: any = {};
 
@@ -95,11 +107,12 @@ export const updateUser = async (req: Request, res: Response) => {
       });
 
       if (existingEmail) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: "Email already exists",
         });
+        return;
       }
 
       updateData.email = normalizedEmail;
@@ -117,11 +130,12 @@ export const updateUser = async (req: Request, res: Response) => {
       });
 
       if (existingPhone) {
-        return customErrorRes({
+        customErrorRes({
           res,
           status: 400,
           message: "Phone number already exists",
         });
+        return;
       }
 
       updateData.phone = phone;
@@ -142,7 +156,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
     const sanitizedUser = User.sanitizeUser(updatedUser);
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "User details updated successfully",
@@ -150,7 +164,7 @@ export const updateUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

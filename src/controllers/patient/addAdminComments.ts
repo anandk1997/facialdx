@@ -1,8 +1,11 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { customErrorRes, customResponse } from "../../utils";
 import { prisma } from "../../utils/prisma";
 
-export const addAdminComments = async (req: Request, res: Response) => {
+export const addAdminComments: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   const {
     image_id,
 
@@ -16,11 +19,12 @@ export const addAdminComments = async (req: Request, res: Response) => {
 
   try {
     if (!image_id) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "Patient ID is required",
       });
+      return;
     }
 
     const patient = await prisma.patient.findUnique({
@@ -28,11 +32,12 @@ export const addAdminComments = async (req: Request, res: Response) => {
     });
 
     if (!patient) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 404,
         message: "Patient not found",
       });
+      return;
     }
 
     const updatedPatient = await prisma.patient.update({
@@ -47,7 +52,7 @@ export const addAdminComments = async (req: Request, res: Response) => {
       },
     });
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Comments updated successfully",
@@ -56,7 +61,7 @@ export const addAdminComments = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating patient:", error);
 
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

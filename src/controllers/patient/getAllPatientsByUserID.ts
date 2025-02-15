@@ -1,6 +1,6 @@
 import { customErrorRes, customResponse } from "../../utils";
 import { prisma } from "../../utils/prisma";
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import dayjs from "dayjs";
 
 import utc from "dayjs/plugin/utc";
@@ -10,16 +10,20 @@ import { format } from "date-fns";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-export const getAllPatientsByUserID = async (req: Request, res: Response) => {
+export const getAllPatientsByUserID: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const userId = req.params.id;
 
     if (!userId) {
-      return customErrorRes({
+      customErrorRes({
         res,
         status: 400,
         message: "User ID is required",
       });
+      return;
     }
 
     const page = parseInt(req.query.page as string) || 1;
@@ -71,7 +75,7 @@ export const getAllPatientsByUserID = async (req: Request, res: Response) => {
     });
 
     if (patients?.length === 0) {
-      return customResponse({
+      customResponse({
         res,
         status: 404,
         message: "No data found",
@@ -81,6 +85,7 @@ export const getAllPatientsByUserID = async (req: Request, res: Response) => {
         totalPages,
         currentPage: page,
       });
+      return;
     }
 
     // Transform patients into the desired response structure
@@ -146,7 +151,7 @@ export const getAllPatientsByUserID = async (req: Request, res: Response) => {
       return acc;
     }, []);
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Data found successfully",
@@ -159,7 +164,7 @@ export const getAllPatientsByUserID = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching patients:", error);
 
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",

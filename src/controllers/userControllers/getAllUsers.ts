@@ -1,9 +1,12 @@
 import { User } from "../../models/user";
 import { customErrorRes, customResponse } from "../../utils";
 import { prisma } from "../../utils/prisma";
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 
-export const getUsers = async (req: Request, res: Response) => {
+export const getUsers: RequestHandler = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -59,7 +62,7 @@ export const getUsers = async (req: Request, res: Response) => {
     const sanitizedUsers = users.map(User.sanitizeUser);
 
     if (sanitizedUsers?.length === 0) {
-      return customResponse({
+      customResponse({
         res,
         status: 404,
         message: "No data found",
@@ -69,9 +72,10 @@ export const getUsers = async (req: Request, res: Response) => {
         totalPages,
         currentPage: page,
       });
+      return;
     }
 
-    return customResponse({
+    customResponse({
       res,
       status: 200,
       message: "Data found successfully",
@@ -83,7 +87,7 @@ export const getUsers = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching users:", error);
-    return customErrorRes({
+    customErrorRes({
       res,
       status: 500,
       message: "Internal server error",
