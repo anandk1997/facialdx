@@ -1,0 +1,21 @@
+model prediction {
+  image_id                Int      @id @default(autoincrement())
+  user_id                 String
+  input_image             Bytes
+  dark_circle             Json
+  dark_circle_output      Bytes?
+  pupil_comparison        Json?
+  pupil_comparison_output Bytes?
+  nose_shape              Json?
+  nose_shape_output       Bytes?
+  nostril                 Json?
+  nostril_output          Bytes?
+  mouth_alignment         Json?
+  mouth_alignment_output  Bytes?
+  pupil_alignment         Json?
+  pupil_alignment_output  Bytes?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@unique([user_id, image_id])
+}

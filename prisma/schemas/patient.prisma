@@ -1,0 +1,16 @@
+model Patient {
+    id            Int     @id @default(autoincrement())
+    name          String
+    image_id      Int     @unique
+    user_id       String
+    dark_circle_comment      String?
+    pupil_comparison_comment String?
+    nose_shape_comment       String?
+    nostril_comment          String?
+    mouth_alignment_comment  String?
+    pupil_alignment_comment  String?
+    createdAt                DateTime @default(now())
+    updatedAt                DateTime @updatedAt
+
+    @@unique([user_id, image_id])
+}

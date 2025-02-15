@@ -1,0 +1,72 @@
+name: Node.js CI on Self-Hosted Runner
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Echo GitHub Workspace
+        run: echo "GitHub Workspace is ${GITHUB_WORKSPACE}"
+
+      - name: Clean workspace
+        run: |
+          rm -rf ${GITHUB_WORKSPACE}/FacialDX-Node/
+          echo "Workspace cleaned successfully."
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          path: "FacialDX-Node" # This specifies a relative path within GITHUB_WORKSPACE
+
+      - name: Prepare backup directory
+        run: |
+          BACKUP_DIR="/home/facialdx/Anand/FacialDX-Node-backup"
+          if [ ! -d "$BACKUP_DIR" ]; then
+            mkdir -p "$BACKUP_DIR"
+          fi
+
+      - name: Backup current deployment
+        run: |
+          BACKUP_DIR="/home/facialdx/Anand/FacialDX-Node-backup"
+          if [ -d /home/facialdx/Anand/FacialDX-Node ]; then
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            cp -r /home/facialdx/Anand/FacialDX-Node "$BACKUP_DIR/FacialDX-Node-${TIMESTAMP}"
+            echo "Backup created successfully."
+          else
+            echo "No current deployment found, skipping backup."
+          fi
+
+      - name: Copying the updated code
+        run: |
+          rm -rf /home/facialdx/Anand/FacialDX-Node
+          cp -r /home/facialdx/actions-runner/_work/FacialDX-Node/FacialDX-Node/FacialDX-Node /home/facialdx/Anand
+
+      - name: Install dependencies
+        run: |
+          npm install
+        working-directory: /home/facialdx/Anand/FacialDX-Node
+
+      - name: Build the application
+        run: |
+          npm run build
+        working-directory: /home/facialdx/Anand/FacialDX-Node
+
+      - name: Stop and delete PM2 process
+        run: |
+          if pm2 describe facialdx > /dev/null; then
+            kill -9 $( lsof -t -i:5001)
+            pm2 stop facialdx
+            pm2 delete facialdx
+          else
+            echo "Process facialdx not found, skipping stop and delete."
+          fi
+
+      - name: Restart application using PM2
+        run: |
+          pm2 start ecosystem.config.js
+        working-directory: /home/facialdx/Anand/FacialDX-Node

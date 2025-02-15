@@ -1,0 +1,77 @@
+model Blacklistusers {
+  id            String   @id @default(uuid())
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model Patient {
+    id            Int     @id @default(autoincrement())
+    name          String
+    image_id      Int     @unique
+    user_id       String
+    dark_circle_comment      String?
+    pupil_comparison_comment String?
+    nose_shape_comment       String?
+    nostril_comment          String?
+    mouth_alignment_comment  String?
+    pupil_alignment_comment  String?
+    createdAt                DateTime @default(now())
+    updatedAt                DateTime @updatedAt
+
+    @@unique([user_id, image_id])
+}
+
+model prediction {
+  image_id                Int      @id @default(autoincrement())
+  user_id                 String
+  input_image             Bytes
+  dark_circle             Json
+  dark_circle_output      Bytes?
+  pupil_comparison        Json?
+  pupil_comparison_output Bytes?
+  nose_shape              Json?
+  nose_shape_output       Bytes?
+  nostril                 Json?
+  nostril_output          Bytes?
+  mouth_alignment         Json?
+  mouth_alignment_output  Bytes?
+  pupil_alignment         Json?
+  pupil_alignment_output  Bytes?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@unique([user_id, image_id])
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  phone         String   @unique
+  password      String
+  role          Role     @default(USER)
+  isActive      Boolean  @default(true)
+  organization  String
+  adminID       String
+  firebaseToken String?
+  deviceDetails String?
+  deviceOS      String?
+  appVersion    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
