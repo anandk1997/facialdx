@@ -62,5 +62,5 @@ export const schemaWatcher = () => {
   console.log("Watching for file changes...");
 };
 
-// if (process.env.NODE_ENV === "dev") schemaWatcher();
+// if (process.env.NODE_ENV === "development") schemaWatcher();
 schemaWatcher();

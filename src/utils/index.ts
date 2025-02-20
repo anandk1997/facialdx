@@ -2,8 +2,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "./prisma";
 import { Response } from "express";
 import nodemailer from "nodemailer";
-
-import { env } from "../config/env";
+import { config } from "src/config";
 
 export const seedDatabase = async (
   name: string,
@@ -44,13 +43,13 @@ export const seedDatabase = async (
 };
 
 export const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: parseInt(env.SMTP_PORT!, 10),
+  host: config.smtp.SMTP_HOST,
+  port: parseInt(config.smtp.SMTP_PORT!, 10),
   secure: false,
 
   auth: {
-    user: env.SMTP_EMAIL,
-    pass: env.SMTP_PASSWORD,
+    user: config.smtp.SMTP_EMAIL,
+    pass: config.smtp.SMTP_PASSWORD,
   },
 });
 
@@ -61,7 +60,7 @@ export const sendEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: env.SMTP_EMAIL,
+      from: config.smtp.SMTP_EMAIL,
       to: email,
       subject,
       html,

@@ -1,10 +1,10 @@
 import axios from "axios";
 import { customErrorRes, customResponse } from "../../utils";
 import { Request, Response, RequestHandler } from "express";
-import { env } from "../../config/env";
 
 import FormData from "form-data";
 import fs from "fs";
+import { config } from "src/config";
 
 export const uploadImages: RequestHandler = async (
   req: Request,
@@ -43,7 +43,7 @@ export const uploadImages: RequestHandler = async (
     });
     form.append("user_id", id);
 
-    const apiUrl = env.PYTHON_URL + "/image/upload/";
+    const apiUrl = config.PYTHON_URL + "/image/upload/";
 
     const apiResponse = await axios.post(apiUrl, form, {
       // headers: form.getHeaders(),

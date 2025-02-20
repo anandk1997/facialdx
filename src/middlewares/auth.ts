@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-import { env } from "../config/env";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { User } from "@prisma/client";
 import { customErrorRes } from "../utils";
 import { prisma } from "../utils/prisma";
+import { config } from "src/config";
 
 export const authenticateToken = (
   req: Request,
@@ -23,7 +23,7 @@ export const authenticateToken = (
     return;
   }
 
-  jwt.verify(token, env.JWT_SECRET!, async (err: any, user: any) => {
+  jwt.verify(token, config.jwt.ACCESS_SECRET!, async (err: any, user: any) => {
     if (err)
       return customErrorRes({
         res,
