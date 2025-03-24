@@ -22,6 +22,7 @@ import { checkDatabaseConnection } from "./utils/prisma";
 // import { SESSION_OPTS } from "./config";
 import { seedDatabase } from "./utils/index";
 import { patientRoutes } from "./routes/patientRoutes";
+import { responseHandler } from "./middlewares/response.middleware";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(responseHandler);
 
 // Logging
 app.use(
@@ -55,7 +57,10 @@ app.use(
 );
 
 // app.use(session(SESSION_OPTS));
-app.use("/images", express.static("src/public/img"));
+app.use(
+  "/images",
+  express.static("src/public/img") as unknown as express.RequestHandler,
+);
 
 const routes = [authRoutes, userRoutes, predictionRoutes, patientRoutes];
 

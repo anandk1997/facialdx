@@ -1,9 +1,10 @@
 import { Request, Response, RequestHandler } from "express";
 
 import { prisma } from "../../../utils/prisma";
-import { customErrorRes, customResponse, sendEmail } from "../../../utils";
+import { customErrorRes, sendEmail } from "../../../utils";
 import { cleanExpiredOTPs, generateOTP, otpCache, otpEmail } from "./utils";
 import validator from "validator";
+import { ICustomResponse } from "src/middlewares/response.middleware";
 
 export const forgotPassword: RequestHandler = async (
   req: Request,
@@ -65,15 +66,13 @@ export const forgotPassword: RequestHandler = async (
     // Send OTP via email
     sendEmail(normalizedEmail, otpEmail.subject, otpEmail.html(otp));
 
-    customResponse({
-      res,
+    (res as ICustomResponse).response!({
       status: 200,
       message: "OTP sent on Email",
       data: {
         email: user?.email,
       },
     });
-    return;
   } catch (error) {
     console.error("Error in forgotPassword:", error);
     customErrorRes({
